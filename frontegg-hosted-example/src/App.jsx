@@ -34,9 +34,7 @@ function App() {
             <span>Logged in as: {user?.name}</span>
           </div>
           <div>
-            <button onClick={() => alert(user?.accessToken)}>
-              What is my access token?
-            </button>
+            <span>jwt: {user?.accessToken}</span>
           </div>
           <div>
             <button onClick={() => logout()}>Click to logout</button>
