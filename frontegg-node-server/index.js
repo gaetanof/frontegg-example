@@ -94,7 +94,7 @@ app.post("/usersignup", cors(corsOptions), async (req, res) => {
   console.log("Received a POST request at /usersignup");
   console.log("Request body:", req.body);
 
-  const newTenantId = "561b315f-8fcc-4a50-bb53-53e16349bd57";
+  const newTenantId = "561b315f-8fcc-4a50-bb53-53e16349bd57"; //  Please specify the account ID you want to assign to the new user.
   const userId = req.body.user.id;
   const originalTenantId = req.body.user.tenantId;
 
