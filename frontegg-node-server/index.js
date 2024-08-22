@@ -40,12 +40,15 @@ app.get("/overrides", cors(corsOptions), (req, res) =>
     localizations: {
       en: {
         loginBox: {
+          login: {
+            loginMfaListAuthenticatorAppSubtitle: "This is an example",
+          },
           forgetPassword: {
-            title: 'Forgot your password?',
+            title: 'ejemplo de reset pwd',
             description: 'SAMPLE',
             emailInputLabel: 'Email',
             emailInputPlaceholder: 'name@example.com',
-            submitButtonText: 'SAMPLE me',
+            submitButtonText: 'PROCEDA',
             backToLogin: 'Back to login',
             resetEmailSentTitle: 'custom title',
             resetEmailSentMessage: 'custom message',

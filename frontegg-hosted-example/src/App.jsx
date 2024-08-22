@@ -1,18 +1,18 @@
 import './App.css';
-// import { useEffect } from 'react';
-import { AdminPortal } from '@frontegg/react';
+import {
+  AdminPortal,
+  useAuth,
+  useAuthActions,
+  useLoginWithRedirect,
+  ContextHolder,
+} from '@frontegg/react';
+import { useState } from 'react';
 
-import { useAuth, useLoginWithRedirect, ContextHolder } from '@frontegg/react';
 function App() {
   const { user, isAuthenticated } = useAuth();
   const loginWithRedirect = useLoginWithRedirect();
-
-  // Uncomment this to redirect to login automatically
-  // useEffect(() => {
-  //   if (!isAuthenticated) {
-  //     loginWithRedirect();
-  //   }
-  // }, [isAuthenticated, loginWithRedirect]);
+  const { switchTenant } = useAuthActions();
+  const [selectedTenant, setSelectedTenant] = useState('');
 
   const logout = () => {
     const baseUrl = ContextHolder.getContext().baseUrl;
@@ -21,6 +21,14 @@ function App() {
 
   const handleClick = () => {
     AdminPortal.openHosted();
+  };
+
+  const handleSwitchTenant = () => {
+    if (selectedTenant) {
+      switchTenant({ tenantId: selectedTenant });
+    } else {
+      alert('Please select a tenant first');
+    }
   };
 
   return (
@@ -40,6 +48,25 @@ function App() {
             <button onClick={() => logout()}>Click to logout</button>
           </div>
           <button onClick={handleClick}>Settings</button>
+
+          {/* Dropdown for selecting tenant */}
+          <div>
+            <label>Select Tenant:</label>
+            <select
+              value={selectedTenant}
+              onChange={(e) => setSelectedTenant(e.target.value)}
+            >
+              <option value="" disabled>
+                Select a tenant
+              </option>
+              {user.tenantIds.map((tenantId) => (
+                <option key={tenantId} value={tenantId}>
+                  {tenantId}
+                </option>
+              ))}
+            </select>
+            <button onClick={handleSwitchTenant}>Select Active Tenant</button>
+          </div>
         </div>
       ) : (
         <div>
