@@ -24,44 +24,10 @@ app.get('/test', (req, res) => {
 // route to customize in hosted mode
 app.get("/overrides", cors(corsOptions), (req, res) =>
   res.send({
-    themeV2: {
-      adminPortal: {
-        pages: {
-          profile: {
-            content: {
-              '.adminportal-fe-root-fl821x': {
-                display: 'none',
-              },
-            },
-          },
-        },
-      },
-    },
     localizations: {
       en: {
-        loginBox: {
-          login: {
-            loginMfaListAuthenticatorAppSubtitle: "This is an example",
-          },
-          forgetPassword: {
-            title: 'ejemplo de reset pwd',
-            description: 'SAMPLE',
-            emailInputLabel: 'Email',
-            emailInputPlaceholder: 'name@example.com',
-            submitButtonText: 'PROCEDA',
-            backToLogin: 'Back to login',
-            resetEmailSentTitle: 'custom title',
-            resetEmailSentMessage: 'custom message',
-          },
-          resetPassword: {
-            title: 'Reset password',
-            description: '',
-            newPasswordInputLabel: 'New password',
-            newPasswordInputPlaceholder: 'Set password',
-            confirmPasswordInputLabel: 'Confirm new password',
-            confirmPasswordInputPlaceholder: 'Re-enter password',
-            resetPasswordButton: 'Reset password',
-          },
+        errors: {
+          "ER-01034": "Test123123",
         },
       },
     },

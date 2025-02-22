@@ -1,0 +1,230 @@
+<link rel="stylesheet"
+  href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
+
+<div class="blog-section-header" id="blogSectionHeader" style="display: none;">
+  <div class="blog-section-header-info">
+    <h5 id="keywordInfo">Mostrando resultados para: <span id="searchKeyword"></span></h5>
+    <h6 id="total-results" style="visibility: hidden;">Cargando resultados...</h6> <!-- Ocultamos inicialmente -->
+  </div>
+  <div class="blog-section-filters">
+    <button id="clearSearchButton" class="filter-button">
+      <span id="clearKeyword"></span>
+      <span class="filter-icon material-symbols-outlined">close</span>
+    </button>
+  </div>
+</div>
+
+<div class="blog-section-container" id="blog-container">
+  <!-- Los blogs serán insertados dinámicamente aquí -->
+</div>
+
+<div class="blog-pagination" id="blog-pagination" style="display: none;">
+  <div class="pagination-container">
+    <span class="pagination-arrow" id="first-page">
+      <span class="material-symbols-outlined">keyboard_double_arrow_left</span>
+    </span>
+    <span class="pagination-arrow" id="prev-page">
+      <span class="material-symbols-outlined">chevron_left</span>
+    </span>
+    <div class="pagination-numbers" id="pagination-numbers">
+      <!-- Aquí se insertarán los números de página -->
+    </div>
+    <span class="pagination-arrow" id="next-page">
+      <span class="material-symbols-outlined">chevron_right</span>
+    </span>
+    <span class="pagination-arrow" id="last-page">
+      <span class="material-symbols-outlined">keyboard_double_arrow_right</span>
+    </span>
+  </div>
+</div>
+
+<script>
+  const apiUrlBase = "https://staging-51b3-contactos5d2219e63c.wpcomstaging.com/wp-json/wp/v2/posts";
+  let totalPosts = 0;
+  let currentPage = 1;
+  let totalPages = 1;
+  let loadingTimeout;
+  let isSearching = false;
+
+  async function fetchBlogs(query = "", limit = 6, page = 1) {
+    const blogContainer = document.getElementById("blog-container");
+    const totalResults = document.getElementById("total-results");
+    const blogSectionHeader = document.getElementById("blogSectionHeader");
+    const clearKeyword = document.getElementById("clearKeyword");
+    const blogPagination = document.getElementById("blog-pagination");
+    const paginationNumbers = document.getElementById("pagination-numbers");
+
+    // Muestra un loader si la respuesta se demora
+    clearTimeout(loadingTimeout);
+    loadingTimeout = setTimeout(() => {
+      blogContainer.innerHTML = `<div class="loader"></div>`;
+      blogContainer.style.minHeight = "100vh";
+    }, 1000);
+
+    // Configurar encabezado si hay búsqueda
+    if (query) {
+      document.getElementById("searchKeyword").textContent = query;
+      clearKeyword.textContent = query;
+      blogSectionHeader.style.display = "flex";
+      isSearching = true;
+    } else {
+      blogSectionHeader.style.display = "none";
+      isSearching = false;
+    }
+
+    try {
+      totalResults.style.visibility = "hidden";
+      const response = await fetch(
+        `${apiUrlBase}?_embed&per_page=${limit}&page=${page}${query ? `&search=${query}` : ""}`
+      );
+      if (!response.ok) throw new Error("Error al obtener los posts");
+
+      totalPosts = parseInt(response.headers.get("X-WP-Total"));
+      totalPages = Math.ceil(totalPosts / limit);
+
+      const posts = await response.json();
+      clearTimeout(loadingTimeout);
+      blogContainer.innerHTML = "";
+
+      totalResults.textContent = `${totalPosts} Resultados`;
+      totalResults.style.visibility = "visible";
+
+      // Renderizar las filas con las tarjetas
+      renderBlogRows(blogContainer, posts);
+
+      // Mostrar paginación
+      if (totalPages > 1 && isSearching) {
+        blogPagination.style.display = "flex";
+        paginationNumbers.innerHTML = "";
+        updatePagination();
+      } else {
+        blogPagination.style.display = "none";
+      }
+
+      adjustSlider();
+    } catch (error) {
+      console.error("Error al cargar los posts:", error);
+      blogContainer.innerHTML = "<p>Error al cargar los posts</p>";
+    }
+    updatePagination();
+    updateSelectedPage();
+  }
+
+  // Renderizar filas con blogs y manejar el estilo
+  function renderBlogRows(container, posts) {
+    const blogsPerRow = 3;
+    for (let i = 0; i < posts.length; i += blogsPerRow) {
+      const blogRow = document.createElement("div");
+      blogRow.className = "blog-row";
+
+      const rowBlogs = posts.slice(i, i + blogsPerRow);
+      rowBlogs.forEach((post) => {
+        const parser = new DOMParser();
+        const parsedHTML = parser.parseFromString(post.content.rendered, "text/html");
+        const imgElement = parsedHTML.querySelector("figure img");
+        const imageUrl = imgElement?.getAttribute("data-orig-file") || "https://via.placeholder.com/300x200";
+
+        const date = new Date(post.date).toLocaleDateString("es-ES", {
+          day: "2-digit",
+          month: "long",
+          year: "numeric",
+        }).replace(
+          /(\d{2}) de (\w+)/,
+          (_, day, month) => `${day} de ${month.charAt(0).toUpperCase()}${month.slice(1)}`
+        );
+
+        blogRow.innerHTML += `
+          <div class="blog-card">
+            <div class="blog-image">
+              <img src="${imageUrl}" alt="${post.title.rendered}">
+            </div>
+            <div class="blog-content">
+              <div class="blog-date">${date}</div>
+              <h2 class="blog-title">${post.title.rendered}</h2>
+              <p class="blog-summary">${post.excerpt.rendered.replace(/(<([^>]+)>)/gi, "")}</p>
+              <a href="${post.link}" class="blog-read-more" target="_blank">Leer Más</a>
+            </div>
+          </div>`;
+      });
+
+      container.appendChild(blogRow);
+
+      // Ajustar el estilo si hay menos de tres blogs
+      const cards = blogRow.querySelectorAll(".blog-card");
+      if (cards.length > 0 && cards.length < 3) {
+        blogRow.classList.add("less-than-three");
+      } else {
+        blogRow.classList.remove("less-than-three");
+      }
+    }
+  }
+
+  // Funciones relacionadas con la paginación
+  function updatePagination() {
+    const paginationNumbers = document.getElementById("pagination-numbers");
+    paginationNumbers.innerHTML = "";
+    let start = 1;
+    let end = Math.min(3, totalPages);
+    for (let i = start; i <= end; i++) {
+      const pageNumber = document.createElement("span");
+      pageNumber.classList.add("pagination-number");
+      pageNumber.textContent = i;
+      pageNumber.addEventListener("click", () => changePage(i));
+      paginationNumbers.appendChild(pageNumber);
+    }
+
+    if (totalPages > 3) {
+      const ellipsis = document.createElement("span");
+      ellipsis.classList.add("pagination-number", "ellipsis");
+      ellipsis.innerHTML = `<span class="material-symbols-outlined">more_horiz</span>`;
+      ellipsis.addEventListener("click", () => showNextPages(4));
+      paginationNumbers.appendChild(ellipsis);
+    }
+  }
+
+  function updateSelectedPage() {
+    const pageNumberElements = document.querySelectorAll(".pagination-number");
+    pageNumberElements.forEach((item) => {
+      item.classList.remove("selected");
+      if (parseInt(item.textContent) === currentPage) {
+        item.classList.add("selected");
+      }
+    });
+  }
+
+  function changePage(page) {
+    currentPage = page;
+    fetchBlogs(isSearching ? document.getElementById("searchKeyword").textContent : "", getBlogLimit(), currentPage);
+    updateSelectedPage();
+  }
+
+  function adjustSlider() {
+    const blogContainer = document.getElementById("blog-container");
+    blogContainer.scrollTop = 0;
+  }
+
+  function getBlogLimit() {
+    return window.innerWidth <= 768 ? 3 : 6;
+  }
+
+  document.addEventListener("searchBlogs", (e) => {
+    const query = e.detail.query;
+    fetchBlogs(query, getBlogLimit(), currentPage);
+  });
+
+  document.getElementById("clearSearchButton").addEventListener("click", () => {
+    fetchBlogs("", getBlogLimit(), 1);
+    document.dispatchEvent(new CustomEvent("clearSearchField"));
+  });
+
+  document.getElementById("first-page").addEventListener("click", () => changePage(1));
+  document.getElementById("last-page").addEventListener("click", () => changePage(totalPages));
+  document.getElementById("prev-page").addEventListener("click", () => {
+    if (currentPage > 1) changePage(currentPage - 1);
+  });
+  document.getElementById("next-page").addEventListener("click", () => {
+    if (currentPage < totalPages) changePage(currentPage + 1);
+  });
+
+  document.addEventListener("DOMContentLoaded", () => fetchBlogs("", getBlogLimit(), 1));
+</script>
