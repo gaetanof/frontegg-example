@@ -7,15 +7,19 @@ import { Root } from './Root';
 import { Settings } from './pages/Settings';
 
 const contextOptions = {
-  baseUrl: '[your-base-url]',
-  clientId: '[your-client-id]',
+  baseUrl: 'yourUrl',
+  clientId: 'clientId',
 };
 
 const routes = [
   {
     path: '/*',
     element: (
-      <FronteggProvider contextOptions={contextOptions} hostedLoginBox={true}>
+      <FronteggProvider
+        contextOptions={contextOptions}
+        hostedLoginBox={true}
+        promptConsent={true}
+      >
         <App />
       </FronteggProvider>
     ),
